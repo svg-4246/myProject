@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce" xmlns:os="http://www.mulesoft.org/schema/mule/os"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="93c6af44-9c39-4e39-9248-f91f66483ac5" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="56dfcdec-5aa5-458b-a265-e9bf288f7f59" >
+		<db:my-sql-connection host="localhost" port="3306" user="root" password="Varun@1234" database="mydb" />
+	</db:config>
+	<os:object-store name="Object_store" doc:name="Object store" doc:id="6b80d561-2717-4163-aa96-91ce93d0c6f1" />
+	<salesforce:sfdc-config name="Salesforce_Config" doc:name="Salesforce Config" doc:id="eec8efca-3575-44ff-8ec1-9d252bcc4bcb" >
+		<salesforce:basic-connection username="sai@high.com" password="Varun@1234" securityToken="fKCxaOkko06hyvbZHymClHJC4" />
+	</salesforce:sfdc-config>
+	<flow name="helloworldFlow" doc:id="95dc7ee6-9ff4-4c60-9e4a-af9b09d905c2" >
+		<http:listener doc:name="Listener" doc:id="2e800ddf-6098-44d2-8d04-e9d6778ba180" config-ref="HTTP_Listener_config" path="objs"/>
+		<ee:transform doc:name="Transform Message" doc:id="3ac9f513-4d9c-4dcd-9b5b-74541bba9452" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+
+output application/json
+--- 
+[
+
+{
+	"Empid" : 5,
+	"EmpName" :"varun",
+	"emailid" : "varun@gmail.com",
+	"companyname" : "highradius"
+	
+},
+{
+	"Empid" : 6,
+	"EmpName" :"siva",
+	"emailid" : "siva@gmail.com",
+	"companyname" : "highradius"
+	
+},
+{
+	"Empid" : 9,
+	"EmpName" :"ram",
+	"emailid" : "ram@gmail.com",
+	"companyname" : "infosys"
+	
+}
+]]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="3f1363cb-b4f6-4316-98f9-64c986fefd9f" />
+		<ee:transform doc:name="Transform Message" doc:id="bee54849-e90c-4f56-8cbc-1594628bcaf6" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+
+payload map{
+	
+	employee_id : $.Empid,
+	employee_name : $.EmpName,
+	email_id: $.emailid,
+	company_name: $.companyname
+	
+	
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<db:insert doc:name="Insert" doc:id="f1ecae47-6a81-41f4-93eb-ce84112d08c9" config-ref="Database_Config">
+			<db:sql ><![CDATA[insert into company(employee_id, employee_name, email_id,company_name) values(:employee_id, :employee_name, :email_id, :company_name)
+]]></db:sql>
+			<db:input-parameters ><![CDATA[#[payload]]]></db:input-parameters>
+		</db:insert>
+	</flow>
+	<flow name="helloworldFlow2" doc:id="d107bf12-a383-4b42-a1e8-03545cd6c817" >
+		<scheduler doc:name="Scheduler" doc:id="9d8f8769-c302-412a-a143-ef72435c402f" >
+			<scheduling-strategy >
+				<cron expression="0 15 10 * * ?" />
+			</scheduling-strategy>
+		</scheduler>
+		<os:retrieve doc:name="Retrieve" doc:id="022b6731-dadf-4a71-929a-74aede934a8f" key="compenyWatermark" target="compenyWatermark" objectStore="Object_store">
+			<os:default-value><![CDATA[#[0]]]></os:default-value>
+		</os:retrieve>
+		<logger level="INFO" doc:name="Logger" doc:id="f4357923-987b-4b4e-848e-2d3aec11a8bb" message="#[payload]" />
+		<db:select doc:name="Select" doc:id="477a4114-2ff3-4286-9a43-b035a111f873" config-ref="Database_Config">
+			<db:sql><![CDATA[select * from company where employee_id > :empid]]></db:sql>
+			<db:input-parameters><![CDATA[#[{
+	empid : vars.compenyWatermark
+}]]]></db:input-parameters>
+		</db:select>
+		<ee:transform doc:name="Transform Message" doc:id="b362db43-4a9e-4178-9da4-dd5bbcbd2829" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+
+payload map{
+ employee_id__c: $.employee_id,
+ employee_name__c: $.employee_name,
+email_id__c: $.email_id,
+Name: $.company_name,
+phonenumber__c: $.phonenumber
+}
+
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<salesforce:create doc:name="Create" doc:id="3105275a-6c68-446f-b0e4-e04910673ac3" config-ref="Salesforce_Config" type="company__c"/>
+		<os:store doc:name="Store" doc:id="19f8920a-14be-48ee-9935-1e56e09de7c3" key="compenyWatermark" objectStore="Object_store">
+			<os:value ><![CDATA[#[max(payload.employee_id)]]]></os:value>
+		</os:store>
+		<logger level="INFO" doc:name="Logger" doc:id="5155388f-574c-4e1b-b031-698656a3be02" message="#[payload]" />
+	</flow>
+	<flow name="helloworldFlow1" doc:id="49299732-6cf7-43ae-bcf4-2695505291df" >
+		<http:listener doc:name="Listener" doc:id="cf893ccf-1383-4ec4-ab22-b9b8577e5f19" config-ref="HTTP_Listener_config" path="che"/>
+		<set-payload value="#[[1,2,3,4,5,6]]" doc:name="[1,2,3,4,5,6]" doc:id="c1c58597-a6cd-4c92-9481-3f37da7960d3" />
+		<ee:cache doc:name="Cache" doc:id="850c4f7b-37a5-478e-9815-84e09dff5659" >
+			<set-payload value="#[payload]" doc:name="Set Payload" doc:id="90b50009-5a1a-4883-bc3f-77c0b2ba3c38" />
+			<ee:transform doc:name="Transform Message" doc:id="c347472a-4ed7-4a48-a8a9-6a1d2f929f56" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+		</ee:cache>
+		<logger level="INFO" doc:name="Logger" doc:id="8d8e22fb-fef6-4831-ba3d-fb2a9d560e46" message="#[payload]"/>
+	</flow>
+</mule>
