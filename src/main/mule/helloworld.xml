@@ -117,7 +117,7 @@ phonenumber__c: $.phonenumber
 	</flow>
 	<flow name="helloworldFlow1" doc:id="49299732-6cf7-43ae-bcf4-2695505291df" >
 		<http:listener doc:name="Listener" doc:id="cf893ccf-1383-4ec4-ab22-b9b8577e5f19" config-ref="HTTP_Listener_config" path="che"/>
-		<set-payload value="#[[1,2,3,4,5,6,7,8]]" doc:name="[1,2,3,4,5,6]" doc:id="c1c58597-a6cd-4c92-9481-3f37da7960d3" />
+		<set-payload value="#[[1,2,3,4,5,6,7]]" doc:name="[1,2,3,4,5,6,7,8]" doc:id="c1c58597-a6cd-4c92-9481-3f37da7960d3" />
 		<ee:cache doc:name="Cache" doc:id="850c4f7b-37a5-478e-9815-84e09dff5659" >
 			<set-payload value="#[payload]" doc:name="Set Payload" doc:id="90b50009-5a1a-4883-bc3f-77c0b2ba3c38" />
 			<ee:transform doc:name="Transform Message" doc:id="c347472a-4ed7-4a48-a8a9-6a1d2f929f56" >
