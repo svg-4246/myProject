@@ -130,6 +130,6 @@ payload]]></ee:set-payload>
 			</ee:transform>
 			<logger level="INFO" doc:name="Logger" doc:id="36b2ffd7-4674-47a2-9570-30fb35dd8105" message='#["payload checking "]'/>
 		</ee:cache>
-		<logger level="INFO" doc:name="Logger" doc:id="8d8e22fb-fef6-4831-ba3d-fb2a9d560e46" message="#[payload]"/>
+		<logger level="INFO" doc:name="Logger" doc:id="8d8e22fb-fef6-4831-ba3d-fb2a9d560e46" message='#[payload ++ "2"]'/>
 	</flow>
 </mule>
